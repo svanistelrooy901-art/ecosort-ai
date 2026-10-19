@@ -2,13 +2,13 @@
 
 ## Primary milestone: incomplete
 
-No installable APK has been produced. No physical Android device has been tested. No live AI scan has been performed.
+A standalone preview APK was successfully built on GitHub Actions for commit `8b58902`: https://github.com/svanistelrooy901-art/ecosort-ai/actions/runs/39185736105 . No physical Android device has been tested and no live AI scan has been performed. The subsequent leaf-icon update requires a new APK build.
 
 ## Repository
 
 Searched connected GitHub and listed all 14 accessible repositories for svanistelrooy901-art; no EcoSort repository was found. This does not establish that no inaccessible repository exists. The GitHub connector exposes no create-repository operation. The owner subsequently created `svanistelrooy901-art/ecosort-ai`; it was verified empty, public and writable on 19 October 2026.
 
-A new local Git repository has baseline and development branches. Development branch: `dev/ecosort-mvp-20261019`. The source is being prepared for a development branch and draft PR in that repository. No merge or deployment has been performed. ClipDock was not modified.
+A new local Git repository has baseline and development branches. Development branch: `dev/ecosort-mvp-20261019`. Development is on `dev/ecosort-mvp-20261019` in draft PR #1: https://github.com/svanistelrooy901-art/ecosort-ai/pull/1 . No merge or deployment has been performed. ClipDock was not modified.
 
 ## Implemented
 
@@ -30,7 +30,9 @@ Final SDK 57 checks performed locally:
 - Vitest: 35 tests passed (mocked AI provider; not live AI accuracy tests).
 - Wrangler deploy dry-run: passed; no deployment.
 - Expo dependency compatibility check: passed using SDK's bundled offline metadata. It warns that offline metadata validation is less reliable than a fresh online check.
-- Android JS export: passed (SDK 57, 1,285 modules, Hermes bundle generated). This is not an APK.
+- Android JS export: passed (SDK 57, 1,285 modules, Hermes bundle generated).
+- GitHub validation: passed for `8b58902` (run 39185736119).
+- GitHub standalone preview APK: passed for `8b58902` (run 39185736105); leaf-icon rebuild pending.
 
 Expo Doctor passed 20/20 on the earlier SDK 58 iteration. Do not treat that as a final SDK 57 Doctor result. A fresh online Doctor check is still required in an unrestricted build environment.
 
@@ -40,7 +42,7 @@ The latest Expo template initially selected SDK 58 / Android compile SDK 37. And
 
 A clean native prebuild for SDK 57 succeeded. Local release APK compilation failed before app compilation because Gradle could not resolve `org.gradle.toolchains.foojay-resolver-convention:1.0.0`. The build log reported network-unreachable errors accessing Maven repositories through the environment proxy. This is a build-environment blocker; native source compilation remains unverified.
 
-The owner still needs to connect an Expo/EAS account/project for an EAS preview APK build. No cloud build was submitted, no signing credentials were created, and no paid build was purchased.
+The public GitHub Actions runner subsequently completed a release preview APK using Expo prebuild and the generated debug signing key. EAS is an optional alternative and has not been configured. No production signing credentials or paid builds were purchased.
 
 ## Visual and live verification blockers
 
@@ -50,7 +52,7 @@ The Worker is not deployed and AI credentials are not configured. The app shows 
 
 ## Required next actions
 
-1. Push development branch and open draft PR in the now-accessible EcoSort repository.
+1. Review draft PR #1 and download the latest successful preview APK artifact.
 2. Try the standard public GitHub Actions runner for a standalone preview APK using Expo prebuild and Gradle. EAS preview remains available as the intended alternative if an owner Expo account is configured. Stop if payment is requested.
 3. Approve the concrete Worker proposal in SETUP.md; provide secrets through Cloudflare's secure tooling, never chat.
 4. Install the APK and complete TESTING.md on a physical Android device with live AI.
