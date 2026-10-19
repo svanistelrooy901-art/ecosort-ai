@@ -19,7 +19,11 @@
       "package": "space.digitalsambal.ecosort",
       "blockedPermissions": [
         "android.permission.RECORD_AUDIO"
-      ]
+      ],
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
+      "versionCode": 2
     },
     "web": {
       "favicon": "./assets/branding/ecosort-favicon.png",
@@ -38,7 +42,7 @@
         "expo-image-picker",
         {
           "photosPermission": "Pilih foto bahan untuk analisis EcoSort AI.",
-          "cameraPermission": false,
+          "cameraPermission": "Benarkan EcoSort AI mengambil foto bahan untuk analisis.",
           "microphonePermission": false
         }
       ],

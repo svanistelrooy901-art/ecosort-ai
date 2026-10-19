@@ -60,3 +60,11 @@ The Worker is not deployed and AI credentials are not configured. The app shows 
 ## Costs
 
 No paid services were activated or AI API calls made. The RM200 target is a planning ceiling, not a guarantee of provider pricing or a programmatic spending cap. Rate limiting does not enforce a global budget.
+
+## Camera permission correction — 19 October 2026
+
+The owner reported being unable to allow Camera in an installed preview. Reproduced the native configuration defect: `expo-image-picker` had `cameraPermission:false`, which emits a CAMERA removal directive and overrides the camera module's permission.
+
+Corrected the picker configuration, explicitly declared Camera, kept microphone blocked, and increased Android versionCode to 2. The app now catches permission-request failures and refreshes permission status when returning from Android Settings.
+
+Regression evidence: the new manifest check failed on the previous generated manifest, then passed after a clean Expo prebuild with the corrected configuration. TypeScript, lint and the existing 35 API tests passed locally. The APK workflow now checks both the generated manifest and the final packaged APK for Camera and absence of microphone access. A new APK must be installed; changing Settings cannot add a permission absent from the old APK. Physical-device confirmation remains required.
