@@ -1,0 +1,17 @@
+node_modules/
+.expo/
+dist/
+build/
+android/
+ios/
+.env
+.env.*
+!.env.example
+.dev.vars*
+*.jks
+*.keystore
+worker/.wrangler/
+dist-web/
+*.log
+!worker/.dev.vars.example
+dist-android/
