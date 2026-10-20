@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "EcoSort AI",
+    "slug": "ecosort-ai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/branding/ecosort-icon.png",
+    "userInterfaceStyle": "light",
+    "ios": {
+      "supportsTablet": true
+    },
+    "android": {
+      "adaptiveIcon": {
+        "backgroundColor": "#F1F6F0",
+        "foregroundImage": "./assets/branding/ecosort-adaptive-foreground.png",
+        "monochromeImage": "./assets/branding/ecosort-monochrome.png"
+      },
+      "predictiveBackGestureEnabled": false,
+      "package": "space.digitalsambal.ecosort",
+      "blockedPermissions": [
+        "android.permission.RECORD_AUDIO"
+      ],
+      "permissions": [
+        "android.permission.CAMERA"
+      ],
+      "versionCode": 3
+    },
+    "web": {
+      "favicon": "./assets/branding/ecosort-favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Benarkan EcoSort AI mengambil foto bahan untuk analisis.",
+          "recordAudioAndroid": false
+        }
+      ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Pilih foto bahan untuk analisis EcoSort AI.",
+          "cameraPermission": "Benarkan EcoSort AI mengambil foto bahan untuk analisis.",
+          "microphonePermission": false
+        }
+      ],
+      "expo-secure-store",
+      "expo-font",
+      "expo-build-properties",
+      "expo-status-bar"
+    ],
+    "scheme": "ecosort"
+  }
+}
