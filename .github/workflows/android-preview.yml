@@ -46,6 +46,6 @@ jobs:
         with:
           name: EcoSort-AI-preview
           path: apk-output/
-          retention-days: 1
+          retention-days: 30
           if-no-files-found: error
 
