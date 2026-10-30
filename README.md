@@ -1,5 +1,12 @@
-# EcoSort AI
+# ECOXENE — simplified academic Android prototype
 
-Android-first student prototype. Development is proposed on a separate branch and reviewed through a draft pull request.
+Previously EcoSort AI / Snap&Sort. Expo SDK 57 + React Native + TypeScript; Cloudflare Workers AI
+adapter; bilingual BM/English. Six simplified modules: dashboard, scanner, local records/locations,
+curated advisor, official action-channel links, and personal activity counts.
 
-No production deployment, paid AI activation or merge has been approved.
+See [agreed scope](docs/SIMPLIFIED-SCOPE.md), [owner setup](docs/SETUP.md),
+[testing](docs/TESTING.md) and [status](docs/STATUS.md).
+
+Local records stay on the device. Live AI is disabled until owner-approved setup/deployment.
+No accounts, admin, live maps, cloud reports or agency integration. Do not deploy, merge or
+activate paid services without owner approval.
