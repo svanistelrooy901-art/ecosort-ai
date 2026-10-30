@@ -1,3 +1,11 @@
+# Current sprint — 30 October 2026
+
+Owner approved the RM400 simplified academic scope. See SIMPLIFIED-SCOPE.md, SETUP.md and
+TESTING.md for current implementation and pending live/device checks. The historical notes
+below describe earlier EcoSort builds and are not the current provider/setup instructions.
+
+---
+
 # Verified status — 19 October 2026
 
 ## Primary milestone: incomplete
@@ -68,3 +76,4 @@ The owner reported being unable to allow Camera in an installed preview. Reprodu
 Corrected the picker configuration, explicitly declared Camera, kept microphone blocked, and increased Android versionCode to 2. The app now catches permission-request failures and refreshes permission status when returning from Android Settings.
 
 Regression evidence: the new manifest check failed on the previous generated manifest, then passed after a clean Expo prebuild with the corrected configuration. TypeScript, lint and the existing 35 API tests passed locally. The APK workflow now checks both the generated manifest and the final packaged APK for Camera and absence of microphone access. A new APK must be installed; changing Settings cannot add a permission absent from the old APK. Physical-device confirmation remains required.
+

@@ -1,10 +1,11 @@
 {
  "$schema": "../node_modules/wrangler/config-schema.json",
- "name": "ecosort-ai-api",
+ "name": "ecoxene-api",
  "main": "src/index.ts",
- "compatibility_date": "2026-10-19",
+ "compatibility_date": "2026-10-30",
  "workers_dev": true,
- "vars": { "AI_MODEL": "gpt-4.1-mini", "AI_ENABLED": "false" },
- "ratelimits": [{ "name": "SCAN_LIMITER", "namespace_id": "4192026", "simple": { "limit": 6, "period": 60 } }],
- "observability": { "enabled": false }
+ "ai": {"binding": "AI"},
+ "vars": {"AI_ENABLED": "false"},
+ "ratelimits": [{"name": "SCAN_LIMITER", "namespace_id": "4192026", "simple": {"limit": 6, "period": 60}}],
+ "observability": {"enabled": false}
 }

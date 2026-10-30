@@ -1,7 +1,12 @@
-# EcoSort AI
+# ECOXENE — simplified academic Android prototype
 
-**Scan → Kenali → Urus → Belajar.** Android-first student prototype built with React Native, Expo and Cloudflare Workers. Approximately RM200 budget target.
+Previously EcoSort AI / Snap&Sort. Expo SDK 57 + React Native + TypeScript; Cloudflare Workers AI
+adapter; bilingual BM/English. Six simplified modules: dashboard, scanner, local records/locations,
+curated advisor, official action-channel links, and personal activity counts.
 
-See [setup and owner activation](docs/SETUP.md), [device acceptance checklist](docs/TESTING.md), and [verified development status](docs/STATUS.md).
+See [agreed scope](docs/SIMPLIFIED-SCOPE.md), [owner setup](docs/SETUP.md),
+[testing](docs/TESTING.md) and [status](docs/STATUS.md).
 
-No production deployment, live paid API call or merge is authorized by this source bundle. The primary milestone remains an installed APK with a real, verified camera → live AI → useful result flow.
+Local records stay on the device. Live AI is disabled until owner-approved setup/deployment.
+No accounts, admin, live maps, cloud reports or agency integration. Do not deploy, merge or
+activate paid services without owner approval.

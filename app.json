@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "EcoSort AI",
+    "name": "ECOXENE",
     "slug": "ecosort-ai",
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/branding/ecosort-icon.png",
     "userInterfaceStyle": "light",
@@ -23,7 +23,8 @@
       "permissions": [
         "android.permission.CAMERA"
       ],
-      "versionCode": 3
+      "versionCode": 4,
+      "allowBackup": false
     },
     "web": {
       "favicon": "./assets/branding/ecosort-favicon.png",
@@ -34,15 +35,15 @@
       [
         "expo-camera",
         {
-          "cameraPermission": "Benarkan EcoSort AI mengambil foto bahan untuk analisis.",
+          "cameraPermission": "Benarkan ECOXENE mengambil foto isu alam sekitar untuk analisis.",
           "recordAudioAndroid": false
         }
       ],
       [
         "expo-image-picker",
         {
-          "photosPermission": "Pilih foto bahan untuk analisis EcoSort AI.",
-          "cameraPermission": "Benarkan EcoSort AI mengambil foto bahan untuk analisis.",
+          "photosPermission": "Pilih foto isu alam sekitar untuk analisis ECOXENE.",
+          "cameraPermission": "Benarkan ECOXENE mengambil foto isu alam sekitar untuk analisis.",
           "microphonePermission": false
         }
       ],

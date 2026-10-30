@@ -1,22 +1,34 @@
-import {useState} from 'react';
-import {View,Text,Pressable,Modal,TextInput,KeyboardAvoidingView,Platform} from 'react-native';
+import {Pressable, Text, View} from 'react-native';
 import {router} from 'expo-router';
-import {Screen,Button,Card,Icon,s,colors,type IconName} from '../components/ui';
-import {DemoWatermark} from '../components/demo-watermark';
+import {Screen, Button, Card, Icon, LanguageSwitch, s, colors, type IconName} from '../components/ui';
+import {useLocale} from '../lib/locale';
 import {useSession} from '../lib/session';
-import {endpoint} from '../lib/api';
-export default function Home(){
- const session=useSession();const [open,setOpen]=useState(false),[base,setBase]=useState(''),[code,setCode]=useState(''),[saving,setSaving]=useState(false),[error,setError]=useState('');
- function openSettings(){setBase(session.base);setCode(session.code);setError('');setOpen(true);}
- const features:{icon:IconName;title:string;topic:string}[]=[{icon:'leaf',title:'Kenali jenis\nbahan',topic:'leaves'},{icon:'recycle',title:'Urus dengan\nbetul',topic:'recycle'},{icon:'fire-off',title:'Elak pembakaran\nterbuka',topic:'burning'},{icon:'book-open-page-variant',title:'Tips mesra\nalam',topic:'compost'}];
- async function save(){setSaving(true);try{endpoint(base);if((code.trim().length<16||code.trim().length>128))throw new Error('Kod demo mesti antara 16 hingga 128 aksara.');await session.save(base.trim(),code.trim());setOpen(false);}catch(e){setError(e instanceof Error?e.message:'Tetapan gagal disimpan.');}finally{setSaving(false);}}
- return <Screen><View style={[s.row,{justifyContent:'space-between',marginBottom:18}]}><View style={s.row}><Icon name="leaf-circle" size={36}/><Text style={s.subheading}>EcoSort AI</Text></View><Pressable accessibilityRole="button" accessibilityLabel="Tetapan demo" disabled={!session.ready} onPress={openSettings} style={{padding:10}}><Icon name="tune-variant"/></Pressable></View>
- <Text style={s.eyebrow}>LANGKAH KECIL. KESAN BESAR.</Text><Text style={s.hero}>Scan. Kenali.{'\n'}Urus dengan Betul.</Text><Text style={s.body}>Ambil gambar sampah atau daun kering. Biar AI bantu kenal pasti bahan dan cadangkan cara pengurusan yang sesuai.</Text>
- <Button title="Mula Scan" icon="camera" onPress={()=>router.push('/camera')}/>
- <View style={{flexDirection:'row',flexWrap:'wrap',gap:12}}>{features.map(f=><Pressable accessibilityRole="button" accessibilityLabel={f.title.replace('\n',' ')} key={f.icon} onPress={()=>router.push({pathname:'/education',params:{topic:f.topic}})} style={{width:'48%',flexGrow:1}}><Card style={{alignItems:'center',minHeight:125,justifyContent:'center'}}><Icon name={f.icon} size={32}/><Text style={[s.small,{textAlign:'center',fontWeight:'700',color:colors.dark}]}>{f.title}</Text></Card></Pressable>)}</View>
- <Card style={{backgroundColor:colors.green,padding:24}}><View style={s.row}><Icon name="tree" size={36} color="#C8E6B8"/><Text style={[s.heading,{color:'white',flex:1}]}>Jom bersama{ '\n'}kurangkan jerebu</Text></View><Text style={[s.body,{color:'#E2EEDF'}]}>Pilih kompos, sungkupan dan pengasingan sisa. Setiap tindakan kecil membantu menjaga udara kita.</Text><Button title="Baca panduan" secondary icon="arrow-right" onPress={()=>router.push({pathname:'/education',params:{topic:'burning'}})}/></Card>
- <Text style={s.small}>Prototaip pelajar · AI boleh tersilap. Semak label bahan dan panduan pengumpul tempatan.</Text>
- {!session.base?<Pressable accessibilityRole="button" onPress={openSettings}><Text style={s.link}>Sediakan sambungan AI demo</Text></Pressable>:null}
- <Modal visible={open} animationType="slide" onRequestClose={()=>setOpen(false)}><View style={{flex:1}}><Screen title="Tetapan demo" onBack={()=>setOpen(false)}><KeyboardAvoidingView behavior={Platform.OS==='ios'?'padding':undefined} style={{gap:18}}><Text style={s.heading}>Sambungkan backend AI</Text><Text style={s.body}>Masukkan alamat Worker HTTPS dan kod demo daripada pemilik projek. Jangan masukkan key API AI di sini.</Text><Text style={s.small}>Alamat backend</Text><TextInput accessibilityLabel="Alamat backend HTTPS" value={base} onChangeText={setBase} autoCapitalize="none" autoCorrect={false} keyboardType="url" placeholder="https://ecosort-ai-api.…workers.dev" style={s.input}/><Text style={s.small}>Kod akses demo</Text><TextInput accessibilityLabel="Kod akses demo" value={code} onChangeText={setCode} autoCapitalize="none" autoCorrect={false} secureTextEntry maxLength={128} style={s.input}/><Text style={s.small}>Kod disimpan dalam storan selamat pada Android. Foto dihantar kepada backend dan penyedia AI hanya selepas anda menekan Analisis. Foto tidak disimpan dalam sejarah aplikasi.</Text>{error?<Text accessibilityRole="alert" style={{color:colors.red}}>{error}</Text>:null}<Button title="Simpan tetapan" busy={saving} onPress={save}/><Button title="Tutup" secondary onPress={()=>setOpen(false)}/></KeyboardAvoidingView></Screen><DemoWatermark/></View></Modal>
- </Screen>;
+import {useRecords} from '../lib/records';
+import {recordCounts} from '../../shared/records';
+
+export default function Home() {
+  const {t} = useLocale();
+  const session = useSession(); const storage = useRecords(); const counts = recordCounts(storage.records);
+  const modules: {icon: IconName; title: string; description: string; route: '/camera' | '/monitoring' | '/advisor' | '/routing' | '/impact' | '/education'}[] = [
+    {icon: 'camera-outline', title: t('AI Environmental Scanner', 'AI Environmental Scanner'), description: t('Imbas foto dan semak kategori isu.', 'Scan a photo and review its category.'), route: '/camera'},
+    {icon: 'map-marker-radius-outline', title: t('Rekod & Lokasi', 'Records & Locations'), description: t('Rekod telefon dan lokasi manual.', 'Device records and manual locations.'), route: '/monitoring'},
+    {icon: 'lightbulb-on-outline', title: t('Penasihat Tindakan', 'Solution Advisor'), description: t('Panduan mengikut kategori pilihan.', 'Guidance for your selected category.'), route: '/advisor'},
+    {icon: 'routes', title: t('Saluran Tindakan', 'Action Channels'), description: t('Pautan rasmi dan pihak untuk dirujuk.', 'Official links and who to consult.'), route: '/routing'},
+    {icon: 'chart-bar', title: t('Impak & Pemulihan', 'Impact & Recovery'), description: t('Ringkasan rekod pada telefon ini.', 'Summary of records on this device.'), route: '/impact'},
+    {icon: 'book-open-page-variant', title: t('Pendidikan & 3R', 'Education & 3R'), description: t('Kompos, sungkupan dan pengurusan sisa.', 'Compost, mulch and waste handling.'), route: '/education'},
+  ];
+  return <Screen>
+    <View style={[s.row, {justifyContent: 'space-between'}]}><View style={[s.row, {flexShrink: 1}]}><Icon name="leaf-circle" size={36} /><Text style={s.heading}>ECOXENE</Text></View><LanguageSwitch /></View>
+    <Text style={s.eyebrow}>{t('01 / HOME DASHBOARD', '01 / HOME DASHBOARD')}</Text>
+    <Text style={s.hero}>{t('Kenali isu.\nPilih tindakan.', 'Identify issues.\nChoose action.')}</Text>
+    <Text style={s.body}>{t('Imbas isu alam sekitar, semak cadangan dan pelajari tindakan yang lebih bertanggungjawab.', 'Scan environmental issues, review suggestions and learn responsible next steps.')}</Text>
+    <Button title={t('Mula imbas', 'Start scanning')} icon="camera" onPress={() => router.push('/camera')} />
+    <Card style={{backgroundColor: colors.pale}}><Text style={s.subheading}>{t('Prototaip akademik', 'Academic prototype')}</Text><Text style={s.small}>{t('AI memerlukan internet dan backend aktif. Tanpa AI, anda masih boleh memilih kategori, membaca panduan dan menyimpan rekod sendiri.', 'AI requires internet and an enabled backend. Without AI, you can still choose a category, read guidance and save your own record.')}</Text></Card>
+    {storage.ready && !storage.failed ? <Card><Text style={s.subheading}>{counts.total} {t('rekod telefon', 'device records')}</Text><Text style={s.body}>{counts.withLocation} {t('dengan lokasi manual', 'with manual locations')}</Text><Text style={s.small}>{t('Bukan statistik komuniti atau pengesahan kejadian.', 'Not community statistics or verified incidents.')}</Text></Card> : <Text style={s.small}>{storage.failed ? t('Rekod tidak dapat dibaca. Semak Tetapan.', 'Unable to read records. Check Settings.') : t('Memuatkan rekod…', 'Loading records…')}</Text>}
+    <Text style={s.subheading}>{t('Modul aplikasi', 'App modules')}</Text>
+    {modules.map(module => <Pressable accessibilityRole="button" key={module.route} onPress={() => router.push(module.route)}><Card><View style={s.row}><Icon name={module.icon} size={32} /><View style={{flex: 1, gap: 5}}><Text style={s.subheading}>{module.title}</Text><Text style={s.small}>{module.description}</Text></View><Icon name="chevron-right" /></View></Card></Pressable>)}
+    <Card><Text style={s.subheading}>{t('Kualiti udara & laporan sekitar', 'Air quality & nearby reports')}</Text><Text style={s.body}>{t('Sumber data belum disambungkan. Tiada bacaan IPU, amaran atau kejadian langsung dipaparkan.', 'Data sources are not connected. No live air-quality readings, alerts or incidents are displayed.')}</Text></Card>
+    <Button secondary icon="tune-variant" title={t('Tetapan sambungan AI', 'AI connection settings')} disabled={!session.ready} onPress={() => router.push('/settings')} />
+    <Text style={s.small}>{t('AI memberi cadangan, bukan pengesahan kejadian atau keputusan penguatkuasaan.', 'AI gives suggestions, not incident verification or enforcement decisions.')}</Text>
+  </Screen>;
 }

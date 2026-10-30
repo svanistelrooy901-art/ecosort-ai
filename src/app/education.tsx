@@ -1,8 +1,26 @@
 import {useState} from 'react';
-import {Linking,Pressable,Text,View} from 'react-native';
+import {Linking, Pressable, Text, View} from 'react-native';
 import {useLocalSearchParams} from 'expo-router';
-import {Screen,Card,Icon,s,colors,Button,type IconName} from '../components/ui';
-import {lessons,sources} from '../../shared/education';
-export default function Education(){const {topic}=useLocalSearchParams<{topic?:string}>();const [selected,setSelected]=useState<string|null>(topic||null),[filter,setFilter]=useState('Semua'),[linkError,setLinkError]=useState('');const lesson=lessons.find(x=>x.id===selected);
- async function open(url:string){try{await Linking.openURL(url);setLinkError('');}catch{setLinkError('Pautan tidak dapat dibuka. Semak sambungan internet.');}}
- return <Screen title={lesson?'Panduan mesra alam':'Tips mesra alam'}>{lesson?<><View style={{height:130,borderRadius:24,alignItems:'center',justifyContent:'center',backgroundColor:lesson.id==='burning'?'#FAE7E1':colors.pale}}><Icon name={lesson.icon as IconName} size={72} color={lesson.id==='burning'?colors.red:colors.green}/></View><Text style={s.eyebrow}>{lesson.tag.toUpperCase()}</Text><Text style={s.heading}>{lesson.title}</Text>{lesson.paragraphs.map(p=><Text key={p} style={s.body}>{p}</Text>)}<Card><Text style={s.small}>Rujukan pendidikan · Disemak 19 Oktober 2026</Text><Pressable accessibilityRole="link" onPress={()=>void open(lesson.source.url)}><Text style={s.link}>{lesson.source.name}</Text></Pressable>{lesson.id==='burning'?<Pressable accessibilityRole="link" onPress={()=>void open(sources.burning.url)}><Text style={s.link}>{sources.burning.name}</Text></Pressable>:null}</Card>{linkError?<Text accessibilityRole="alert" style={{color:colors.red}}>{linkError}</Text>:null}<Button title="Lihat semua panduan" secondary onPress={()=>setSelected(null)}/></>:<><Text style={s.eyebrow}>BELAJAR. ASINGKAN. AMALKAN.</Text><Text style={s.heading}>Bumi lebih sihat bermula dengan kita.</Text><Text style={s.body}>Panduan ringkas untuk bahan harian dan udara yang lebih bersih.</Text><View style={{flexDirection:'row',flexWrap:'wrap',gap:8}}>{['Semua','Organik','Kitar semula','Udara bersih','Am'].map(f=><Pressable accessibilityRole="button" accessibilityState={{selected:filter===f}} key={f} style={[s.pill,filter===f&&{backgroundColor:colors.green}]} onPress={()=>setFilter(f)}><Text style={[s.pillText,filter===f&&{color:'white'}]}>{f}</Text></Pressable>)}</View>{lessons.filter(l=>filter==='Semua'||l.tag===filter).map(l=><Pressable accessibilityRole="button" key={l.id} onPress={()=>setSelected(l.id)}><Card><View style={s.row}><Icon name={l.icon as IconName} size={36}/><View style={{flex:1,gap:6}}><Text style={s.subheading}>{l.title}</Text><Text style={s.small}>{l.summary}</Text></View><Icon name="chevron-right"/></View></Card></Pressable>)}</>}</Screen>;}
+import {Screen, Card, Icon, s, colors, Button, type IconName} from '../components/ui';
+import {useLocale} from '../lib/locale';
+import {lessons} from '../../shared/education';
+import {englishLessons} from '../../shared/education-en';
+export default function Education() {
+  const {topic} = useLocalSearchParams<{topic?: string}>(); const {t, language} = useLocale();
+  const [selected, setSelected] = useState<string | null>(topic || null), [linkError, setLinkError] = useState(false);
+  const lesson = lessons.find(x => x.id === selected);
+  const content = lesson ? language === 'en' ? englishLessons[lesson.id] : lesson : null;
+  async function open(url: string) {try {await Linking.openURL(url); setLinkError(false);} catch {setLinkError(true);}}
+  return <Screen title={t('Pendidikan & 3R', 'Education & 3R')}>
+    {lesson && content ? <>
+      <View style={{height: 110, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.pale}}><Icon name={lesson.icon as IconName} size={64} /></View>
+      <Text style={s.heading}>{content.title}</Text>{content.paragraphs.map(paragraph => <Text key={paragraph} style={s.body}>{paragraph}</Text>)}
+      <Card><Text style={s.small}>{t('Rujukan pendidikan', 'Educational source')}</Text><Pressable accessibilityRole="link" onPress={() => void open(lesson.source.url)}><Text style={s.link}>{lesson.source.name}</Text></Pressable></Card>
+      {linkError ? <Text accessibilityRole="alert" style={{color: colors.red}}>{t('Pautan gagal dibuka. Semak internet.', 'Unable to open the link. Check your connection.')}</Text> : null}
+      <Button secondary title={t('Semua panduan', 'All guides')} onPress={() => setSelected(null)} />
+    </> : <>
+      <Text style={s.eyebrow}>{t('BELAJAR. ASINGKAN. AMALKAN.', 'LEARN. SORT. ACT.')}</Text><Text style={s.heading}>{t('Langkah kecil untuk alam sekitar', 'Small steps for the environment')}</Text>
+      {lessons.map(item => {const copy = language === 'en' ? englishLessons[item.id] : item; return <Pressable accessibilityRole="button" key={item.id} onPress={() => setSelected(item.id)}><Card><View style={s.row}><Icon name={item.icon as IconName} size={32} /><View style={{flex: 1, gap: 5}}><Text style={s.subheading}>{copy.title}</Text><Text style={s.small}>{copy.summary}</Text></View><Icon name="chevron-right" /></View></Card></Pressable>;})}
+    </>}
+  </Screen>;
+}
