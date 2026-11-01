@@ -1,8 +1,8 @@
 {
   "expo": {
-    "name": "ECOXENE",
+    "name": "ECOXENE UI Demo",
     "slug": "ecosort-ai",
-    "version": "1.1.1",
+    "version": "1.2.0",
     "orientation": "portrait",
     "icon": "./assets/branding/ecosort-icon.png",
     "userInterfaceStyle": "light",
@@ -23,7 +23,7 @@
       "permissions": [
         "android.permission.CAMERA"
       ],
-      "versionCode": 5,
+      "versionCode": 6,
       "allowBackup": false
     },
     "web": {

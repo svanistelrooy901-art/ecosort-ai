@@ -40,11 +40,11 @@ jobs:
         run: python3 scripts/check-android-permissions.py --apk android/app/build/outputs/apk/release/app-release.apk --aapt "$ANDROID_HOME/build-tools/36.0.0/aapt"
       - run: |
           mkdir -p apk-output
-          cp android/app/build/outputs/apk/release/app-release.apk apk-output/ECOXENE-Lite-preview.apk
-          sha256sum apk-output/ECOXENE-Lite-preview.apk > apk-output/SHA256SUMS.txt
+          cp android/app/build/outputs/apk/release/app-release.apk apk-output/ECOXENE-UI-Fidelity-Ver1.apk
+          sha256sum apk-output/ECOXENE-UI-Fidelity-Ver1.apk > apk-output/SHA256SUMS.txt
       - uses: actions/upload-artifact@v4
         with:
-          name: ECOXENE-Lite-preview
+          name: ECOXENE-UI-Fidelity-Ver1
           path: apk-output/
           retention-days: 30
           if-no-files-found: error
