@@ -1,4 +1,4 @@
-import {useState} from 'react';
+import {useEffect,useRef,useState} from 'react';
 import {Text, TextInput} from 'react-native';
 import {Screen, Button, Card, s, colors} from '../components/ui';
 import {useLocale} from '../lib/locale';
@@ -10,6 +10,8 @@ export default function Settings() {
   const [confirmReset, setConfirmReset] = useState(false), [resetting, setResetting] = useState(false), [resetError, setResetError] = useState(false);
   const [base, setBase] = useState(session.base), [code, setCode] = useState(session.code);
   const [error, setError] = useState(''), [saving, setSaving] = useState(false), [saved, setSaved] = useState(false);
+  const edited=useRef(false);
+  useEffect(()=>{if(session.ready&&!edited.current){setBase(session.base);setCode(session.code);}},[session.ready,session.base,session.code]);
   async function save() {
     setError(''); setSaved(false);
     try {endpoint(base);} catch {setError('url'); return;}
@@ -21,9 +23,9 @@ export default function Settings() {
     <Text style={s.heading}>{t('Sambungkan backend projek', 'Connect the project backend')}</Text>
     <Text style={s.body}>{t('Gunakan Worker dengan binding Workers AI. Jangan masukkan API key atau token Cloudflare di sini.', 'Use a Worker with a Workers AI binding. Do not enter an API key or Cloudflare token here.')}</Text>
     <Text style={s.small}>{t('Alamat backend HTTPS', 'HTTPS backend address')}</Text>
-    <TextInput accessibilityLabel={t('Alamat backend HTTPS', 'HTTPS backend address')} value={base} onChangeText={v => {setBase(v); setSaved(false);}} autoCapitalize="none" autoCorrect={false} keyboardType="url" placeholder="https://ecoxene-api.…workers.dev" style={s.input} />
+    <TextInput accessibilityLabel={t('Alamat backend HTTPS', 'HTTPS backend address')} value={base} onChangeText={v => {edited.current=true;setBase(v); setSaved(false);}} autoCapitalize="none" autoCorrect={false} keyboardType="url" placeholder="https://ecoxene-api.…workers.dev" style={s.input} />
     <Text style={s.small}>{t('Kod akses demo', 'Demo access code')}</Text>
-    <TextInput accessibilityLabel={t('Kod akses demo', 'Demo access code')} value={code} onChangeText={v => {setCode(v); setSaved(false);}} secureTextEntry autoCapitalize="none" autoCorrect={false} maxLength={128} style={s.input} />
+    <TextInput accessibilityLabel={t('Kod akses demo', 'Demo access code')} value={code} onChangeText={v => {edited.current=true;setCode(v); setSaved(false);}} secureTextEntry autoCapitalize="none" autoCorrect={false} maxLength={128} style={s.input} />
     <Text style={s.small}>{t('Kod disimpan dalam storan selamat Android. Foto dihantar hanya selepas Analisis ditekan. Tiada sejarah foto disimpan oleh aplikasi.', 'The code is saved in secure Android storage. Photos are sent only after you tap Analyse. The app does not save a photo history.')}</Text>
     {error ? <Text accessibilityRole="alert" style={{color: colors.red}}>{error === 'url' ? t('Gunakan alamat HTTPS sahaja tanpa path atau query.', 'Use an HTTPS origin without a path or query.') : error === 'code' ? t('Kod demo mesti antara 16 hingga 128 aksara.', 'Demo code must contain 16 to 128 characters.') : t('Tetapan gagal disimpan.', 'Unable to save settings.')}</Text> : null}
     <Button title={t('Simpan tetapan', 'Save settings')} busy={saving} onPress={save} />

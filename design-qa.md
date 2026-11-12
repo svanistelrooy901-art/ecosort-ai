@@ -22,3 +22,9 @@ fidelity. Device review checklist is provided. This is an unverified visual revi
 not a claim of 100% pixel accuracy or final client acceptance.
 
 final result: blocked (native rendered visual comparison pending)
+
+## Functional Ver2 integration — 12 November
+Approved UI components/assets retained while actual scanner, observations, advisor,
+profile and counts replace the corresponding dummy entry points. Complex demo controls
+remain separate, session-only and labelled. TypeScript/lint/tests/export cannot establish
+native fidelity; physical-device rendered comparison remains pending.
