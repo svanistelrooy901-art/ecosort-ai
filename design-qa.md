@@ -28,3 +28,10 @@ Approved UI components/assets retained while actual scanner, observations, advis
 profile and counts replace the corresponding dummy entry points. Complex demo controls
 remain separate, session-only and labelled. TypeScript/lint/tests/export cannot establish
 native fidelity; physical-device rendered comparison remains pending.
+
+## Interactive map — 12 November
+Static photo replaced by an actual Leaflet street-map renderer in a native WebView, preserving
+ECOXENE header, four-tab navigation and sample badge. Native filter/region controls, marker
+cards and attribution surround the gesture surface. Reference detail cards retain existing style.
+Unit tests exercise mocked map-controller behaviour, not visual/native gesture verification.
+Native rendered comparison and real-phone map loading remain pending.
