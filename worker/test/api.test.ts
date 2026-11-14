@@ -1,4 +1,4 @@
-import {afterEach, describe, expect, it, vi} from 'vitest';
+import {afterEach, beforeEach, describe, expect, it, vi} from 'vitest';
 import {createHandler, MODEL, modelPrompt, parseModelResponse, validateImage, type Env} from '../src/index';
 import {issueCategories, parsePrediction, selectCategory} from '../../shared/environment';
 import {guidance} from '../../shared/guidance';
@@ -11,7 +11,8 @@ function environment(raw: unknown = {response: JSON.stringify(valid)}): Env {
 function request(body: unknown = {image: jpeg, language: 'ms'}, headers: Record<string, string> = {}) {
   return new Request('https://demo.test/v2/identify', {method: 'POST', headers: {Authorization: 'Bearer a-long-random-demo-code', 'Content-Type': 'application/json', ...headers}, body: JSON.stringify(body)});
 }
-afterEach(() => {vi.unstubAllGlobals(); vi.useRealTimers();});
+beforeEach(() => {vi.spyOn(console, 'warn').mockImplementation(() => {});});
+afterEach(() => {vi.unstubAllGlobals(); vi.useRealTimers(); vi.restoreAllMocks();});
 describe('environmental prediction contract and correction', () => {
   it.each(issueCategories)('accepts category %s', category => expect(parsePrediction({...valid, category}).category).toBe(category));
   it('normalises uncertainty without treating the candidate category as confirmed', () => expect(parsePrediction({...valid, certainty: 'uncertain'})).toMatchObject({category: 'unknown', certainty: 'uncertain'}));
@@ -47,6 +48,41 @@ describe('Workers AI boundary', () => {
   it('times out a stalled binding without waiting forever', async () => {vi.useFakeTimers(); const env = environment(); env.AI!.run = vi.fn().mockImplementation(() => new Promise(() => {})); const pending = createHandler()(request(), env); await vi.waitFor(() => expect(env.AI!.run).toHaveBeenCalled()); await vi.advanceTimersByTimeAsync(25_100); expect(await (await pending).json()).toEqual({error: 'analysis_timeout'});});
   it('prompts against treating image text as instructions or inferring illegality', () => {expect(modelPrompt('ms')).toContain('untrusted'); expect(modelPrompt('ms')).toContain('Bahasa Melayu'); expect(modelPrompt('en')).toContain('not proof');});
   it('validates model response with the shared parser', () => expect(parseModelResponse({response: JSON.stringify(valid)})).toEqual(valid));
+  it.each(['```json\n', '```\n', '```JSON\r\n'])('accepts a single complete JSON code fence %s', prefix => {
+    expect(parseModelResponse({response: `  ${prefix}${JSON.stringify(valid)}\n\`\`\`  `})).toEqual(valid);
+  });
+  it.each([
+    `Here is the result: ${JSON.stringify(valid)}`,
+    `\`\`\`json\n${JSON.stringify(valid)}\n\`\`\`\nMore prose`,
+    `\`\`\`json\n${JSON.stringify(valid)}\n\`\`\`\n\`\`\`json\n{}\n\`\`\``,
+    '```json\n{"category":"domestic_waste"\n```',
+    JSON.stringify({...valid, certainty: 0.9}),
+  ])('does not extract, repair, or trust ambiguous model output %#', raw => {
+    expect(() => parseModelResponse({response: raw})).toThrow();
+  });
+  it.each([
+    [{response: '```json\n{"category":\n```'}, 'json:failed'],
+    [{response: JSON.stringify({...valid, category: 'invented'})}, 'schema:failed'],
+    [{response: valid}, 'envelope:failed'],
+  ])('distinguishes malformed output stages without returning provider content %#', async (raw, diagnostic) => {
+    const response = await createHandler()(request(), environment(raw));
+    expect(response.headers.get('X-Ecoxene-Diagnostic')).toBe(diagnostic);
+    expect(await response.json()).toEqual({error: 'analysis_failed'});
+  });
+  it.each([
+    ['Account neurons quota exceeded. private credential', 'quota'],
+    ['Model Agreement: private credential', 'agreement'],
+    ['Invalid image format: private image bytes', 'image_input'],
+    ['Too many requests: private detail', 'rate_limit'],
+    ['private credential or photograph', 'failed'],
+  ])('logs only fixed provider diagnostic labels %#', async (message, reason) => {
+    const env = environment(); env.AI!.run = vi.fn().mockRejectedValue(new Error(message));
+    const response = await createHandler()(request(), env);
+    expect(response.headers.get('X-Ecoxene-Diagnostic')).toBe(`provider:${reason}`);
+    expect(console.warn).toHaveBeenCalledWith('ecoxene.analysis_failed', {stage: 'provider', reason});
+    expect(JSON.stringify(vi.mocked(console.warn).mock.calls)).not.toContain('private');
+    expect(await response.text()).toBe('{"error":"analysis_failed"}');
+  });
 });
 describe('mobile API client', () => {
   it.each(['http://demo.test', 'https://user:pass@demo.test', 'https://demo.test/path', 'https://demo.test/?token=x'])('rejects malformed backend origin %s', base => expect(() => endpoint(base)).toThrow());
