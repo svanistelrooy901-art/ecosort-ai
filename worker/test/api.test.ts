@@ -40,7 +40,13 @@ describe('Workers AI boundary', () => {
   it('uses the fixed Workers AI vision model and preserves language', async () => {
     const env = environment(); const response = await createHandler()(request({image: jpeg, language: 'en'}), env);
     expect(response.status).toBe(200); expect(await response.json()).toEqual({version: 2, language: 'en', identification: valid});
-    expect(env.AI?.run).toHaveBeenCalledWith(MODEL, expect.objectContaining({image: `data:image/jpeg;base64,${jpeg}`, max_tokens: 400, temperature: 0.1, prompt: expect.stringContaining('English')}));
+    expect(env.AI?.run).toHaveBeenCalledWith(MODEL, {
+      messages: [{role: 'user', content: [
+        {type: 'image_url', image_url: {url: `data:image/jpeg;base64,${jpeg}`}},
+        {type: 'text', text: modelPrompt('en')},
+      ]}], max_tokens: 600, temperature: 0, stream: false,
+    });
+    expect(env.AI?.run).toHaveBeenCalledTimes(1);
     expect(response.headers.get('Cache-Control')).toBe('no-store');
   });
   it.each([{response: '```json\n{}\n```'}, {response: '{"category":'}, {response: JSON.stringify({...valid, category: 'illegal'})}, {response: ''}, {response: 'x'.repeat(8001)}, {response: valid}, {error: 'private'}])('rejects malformed and truncated provider output %#', async raw => expect((await createHandler()(request(), environment(raw))).status).toBe(502));
@@ -54,20 +60,51 @@ describe('Workers AI boundary', () => {
   it.each([
     `Here is the result: ${JSON.stringify(valid)}`,
     `\`\`\`json\n${JSON.stringify(valid)}\n\`\`\`\nMore prose`,
+    `\`\`\`json ${JSON.stringify(valid)}\`\`\``,
+    `Berikut analisis imej:\n${JSON.stringify(valid)}\nSila semak keputusan.`,
+  ])('reads a single complete object in a response wrapper %#', raw => {
+    expect(parseModelResponse({response: raw})).toEqual(valid);
+  });
+  it.each([
     `\`\`\`json\n${JSON.stringify(valid)}\n\`\`\`\n\`\`\`json\n{}\n\`\`\``,
     '```json\n{"category":"domestic_waste"\n```',
     JSON.stringify({...valid, certainty: 0.9}),
-  ])('does not extract, repair, or trust ambiguous model output %#', raw => {
+    `${JSON.stringify(valid)} ${JSON.stringify({...valid, category: 'domestic_waste'})}`,
+    `Here is an array: [${JSON.stringify(valid)}]`,
+    `${JSON.stringify(valid)} {"category":`,
+    JSON.stringify(valid).slice(0, -1) + ',}',
+    'I cannot identify the image.',
+  ])('does not repair syntax or choose between ambiguous results %#', raw => {
     expect(() => parseModelResponse({response: raw})).toThrow();
   });
   it.each([
-    [{response: '```json\n{"category":\n```'}, 'json:failed'],
+    [{response: '```json\n{"category":\n```'}, 'json:incomplete_json'],
+    [{response: 'I cannot identify this image.'}, 'json:no_object'],
+    [{response: `${JSON.stringify(valid)} ${JSON.stringify(valid)}`}, 'json:multiple_objects'],
+    [{response: '{"category":no}'}, 'json:invalid_json'],
     [{response: JSON.stringify({...valid, category: 'invented'})}, 'schema:failed'],
     [{response: valid}, 'envelope:failed'],
   ])('distinguishes malformed output stages without returning provider content %#', async (raw, diagnostic) => {
     const response = await createHandler()(request(), environment(raw));
     expect(response.headers.get('X-Ecoxene-Diagnostic')).toBe(diagnostic);
     expect(await response.json()).toEqual({error: 'analysis_failed'});
+  });
+  it('handles braces, escaped quotes and Unicode inside strings without guessing JSON boundaries', () => {
+    const prediction = {...valid, summary: 'Kertas bertanda {A} dan "B".', observations: ['Teks \\{bukan objek\\} pada kertas.']};
+    expect(parseModelResponse({response: `Analysis:\n${JSON.stringify(prediction)}\nEnd.`})).toEqual(prediction);
+  });
+  it('does not turn a provider refusal into a fabricated unknown prediction or retry', async () => {
+    const env = environment({response: 'I cannot analyse this image.'});
+    const response = await createHandler()(request(), env);
+    expect(response.status).toBe(502);
+    expect(response.headers.get('X-Ecoxene-Diagnostic')).toBe('json:no_object');
+    expect(env.AI?.run).toHaveBeenCalledTimes(1);
+  });
+  it('returns uncertainty from a wrapped complete prediction without promoting its category', async () => {
+    const env = environment({response: `Result:\n${JSON.stringify({...valid, certainty: 'uncertain'})}`});
+    const response = await createHandler()(request(), env);
+    expect(response.status).toBe(200);
+    expect(await response.json()).toMatchObject({identification: {category: 'unknown', certainty: 'uncertain'}});
   });
   it.each([
     ['Account neurons quota exceeded. private credential', 'quota'],
