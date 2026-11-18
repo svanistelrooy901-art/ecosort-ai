@@ -8,6 +8,7 @@ import {Screen, Button, Card, Icon, s, colors} from '../components/ui';
 import {useSession, type Photo} from '../lib/session';
 import {useLocale} from '../lib/locale';
 import {identify, apiMessage} from '../lib/api';
+import {photoResize, SCAN_TIMEOUT_MS} from '../../shared/scan-config';
 
 export default function Camera() {
   const session = useSession(); const {t, language} = useLocale();
@@ -35,8 +36,8 @@ export default function Camera() {
       if (mounted.current && !response.granted) setError('permission');
     } catch {if (mounted.current) setError('permission');} finally {if (mounted.current) setPermissionBusy(false);}
   }
-  async function prepare(uri: string) {
-    const context = ImageManipulator.manipulate(uri); context.resize({width: 1024});
+  async function prepare(uri: string, width: number, height: number) {
+    const context = ImageManipulator.manipulate(uri), resize = photoResize(width, height); if (resize) context.resize(resize);
     const rendered = await context.renderAsync();
     const output = await rendered.saveAsync({compress: .7, format: SaveFormat.JPEG, base64: true});
     if (!output.base64 || output.base64.length > 2_666_668) throw new Error('Photo preparation failed');
@@ -44,12 +45,12 @@ export default function Camera() {
   }
   async function capture() {
     if (lock.current || !ready) return; lock.current = true; setBusy(true); setError(null);
-    try {const pic = await camera.current?.takePictureAsync({quality: .8}); if (!pic) throw new Error('Not ready'); await prepare(pic.uri);}
+    try {const pic = await camera.current?.takePictureAsync({quality: .8}); if (!pic) throw new Error('Not ready'); await prepare(pic.uri, pic.width, pic.height);}
     catch {if (mounted.current) setError('photo');} finally {lock.current = false; if (mounted.current) setBusy(false);}
   }
   async function gallery() {
     if (lock.current) return; lock.current = true; setBusy(true); setError(null);
-    try {const result = await ImagePicker.launchImageLibraryAsync({mediaTypes: ['images'], quality: .8, allowsMultipleSelection: false, exif: false}); if (!result.canceled) await prepare(result.assets[0].uri);}
+    try {const result = await ImagePicker.launchImageLibraryAsync({mediaTypes: ['images'], quality: .8, allowsMultipleSelection: false, exif: false}); if (!result.canceled) await prepare(result.assets[0].uri, result.assets[0].width, result.assets[0].height);}
     catch {if (mounted.current) setError('photo');} finally {lock.current = false; if (mounted.current) setBusy(false);}
   }
   async function analyze() {
@@ -57,7 +58,7 @@ export default function Camera() {
     if (!session.base || !session.code) {setError('setup'); return;}
     lock.current = true; setAnalyzing(true); setError(null);
     const requestedLanguage = language, controller = new AbortController(); abort.current = controller;
-    const timer = setTimeout(() => controller.abort(), 35_000);
+    const timer = setTimeout(() => controller.abort(), SCAN_TIMEOUT_MS);
     try {
       const result = await identify(session.base, session.code, photo.base64, controller.signal, requestedLanguage);
       if (!mounted.current || controller.signal.aborted) return;
@@ -81,6 +82,7 @@ export default function Camera() {
     {photo ? <>
       <Text style={s.small}>{t('Analisis menghantar foto ke backend dan Workers AI. Elakkan wajah, dokumen dan maklumat peribadi.', 'Analysis sends this photo to the backend and Workers AI. Avoid faces, documents and personal details.')}</Text>
       <Button title={t('Analisis dengan AI', 'Analyse with AI')} icon="creation" busy={analyzing} disabled={busy} onPress={analyze} />
+      {analyzing ? <Text style={s.small}>{t('Analisis boleh mengambil masa sehingga 90 saat. Anda boleh batalkan.', 'Analysis can take up to 90 seconds. You can cancel.')}</Text> : null}
       {analyzing ? <Button title={t('Batalkan analisis', 'Cancel analysis')} secondary onPress={() => abort.current?.abort()} /> : <Button title={t('Ambil semula', 'Retake photo')} secondary icon="camera-retake" onPress={() => {setPhoto(null); setReady(false); setError(null);}} />}
     </> : <>
       <Button title={t('Ambil foto', 'Take photo')} icon="camera" busy={busy} disabled={!ready} onPress={capture} />

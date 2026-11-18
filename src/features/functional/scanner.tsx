@@ -8,6 +8,7 @@ import {useLocale} from '../../lib/locale';
 import {identify,apiMessage} from '../../lib/api';
 import {Icon} from '../../components/ui';
 import {issueCategories,labels,selectCategory} from '../../../shared/environment';
+import {photoResize,SCAN_TIMEOUT_MS} from '../../../shared/scan-config';
 import {Action,c,Copy,DemoScreen,go,Notice,Panel,Row,Title,u} from '../ui-demo/ui';
 export function Scanner(){
  const session=useSession(),{t,language}=useLocale();const [busy,setBusy]=useState(false),[analyzing,setAnalyzing]=useState(false),[error,setError]=useState('');
@@ -18,21 +19,21 @@ export function Scanner(){
   if(camera){const permission=await ImagePicker.requestCameraPermissionsAsync();if(!permission.granted){if(active.current)setError(permission.canAskAgain?'permission':'settings');return;}}
   const options={mediaTypes:['images'] as ['images'],quality:.8,exif:false,allowsMultipleSelection:false};
   const result=camera?await ImagePicker.launchCameraAsync(options):await ImagePicker.launchImageLibraryAsync(options);if(result.canceled||!active.current||token!==epoch.current)return;
-  const image=ImageManipulator.manipulate(result.assets[0].uri);const width=result.assets[0].width;image.resize({width:Math.min(width||1024,1024)});
+  const asset=result.assets[0],image=ImageManipulator.manipulate(asset.uri),resize=photoResize(asset.width,asset.height);if(resize)image.resize(resize);
   const rendered=await image.renderAsync();const photo=await rendered.saveAsync({compress:.7,format:SaveFormat.JPEG,base64:true});
   if(!photo.base64||photo.base64.length>2_666_668)throw new Error('image');
   if(active.current&&token===epoch.current)session.startResult(null,language,{uri:photo.uri,base64:photo.base64});
  }catch{if(active.current)setError('photo');}finally{lock.current=false;if(active.current)setBusy(false);}}
  async function analyze(){if(lock.current||!session.photo)return;if(!session.ready||!session.base||!session.code){setError('setup');return;}
   lock.current=true;setAnalyzing(true);setError('');const controller=new AbortController();request.current=controller;const photo=session.photo;const requestedLanguage=language;
-  timer.current=setTimeout(()=>controller.abort(),35000);
+  timer.current=setTimeout(()=>controller.abort(),SCAN_TIMEOUT_MS);
   try{const result=await identify(session.base,session.code,photo.base64,controller.signal,requestedLanguage);if(active.current&&!controller.signal.aborted){setAnalyzing(false);session.startResult(result,requestedLanguage,photo);router.push('/scan-result');}}
   catch(e){if(active.current)setError(controller.signal.aborted?t('Analisis dibatalkan atau tamat masa. Cuba lagi.','Analysis cancelled or timed out. Retry.'):apiMessage(e,requestedLanguage));}
   finally{if(timer.current)clearTimeout(timer.current);lock.current=false;if(active.current){setAnalyzing(false);setBusy(false);}}
  }
  return <DemoScreen sample={false} title="AI Environmental Scanner" tab="scan">
  {session.photo?<Image source={{uri:session.photo.uri}} style={[u.photo,{height:250}]} resizeMode="contain"/>:<View style={{height:180,backgroundColor:c.mint,borderRadius:16,alignItems:'center',justifyContent:'center'}}><Icon name="camera" size={72}/></View>}
- {analyzing?<Panel><ActivityIndicator color={c.green}/><Copy>{t('AI sedang menganalisis foto…','AI is analysing your photo…')}</Copy><Action outline title={t('Batalkan','Cancel')} onPress={()=>request.current?.abort()}/></Panel>:<>
+ {analyzing?<Panel><ActivityIndicator color={c.green}/><Copy>{t('AI sedang menganalisis foto…','AI is analysing your photo…')}</Copy><Copy small>{t('Analisis boleh mengambil masa sehingga 90 saat. Anda boleh batalkan.','Analysis can take up to 90 seconds. You can cancel.')}</Copy><Action outline title={t('Batalkan','Cancel')} onPress={()=>request.current?.abort()}/></Panel>:<>
  <Action icon="camera" title={busy?t('Menyediakan foto…','Preparing photo…'):session.photo?t('Ambil semula','Retake Photo'):t('Ambil Foto','Take Photo')} disabled={busy} onPress={()=>void choose(true)}/>
  <Action outline icon="image-outline" title={t('Muat Naik Gambar','Upload Image')} disabled={busy} onPress={()=>void choose(false)}/>
  {session.photo?<><Notice>{t('Menekan Analisis menghantar foto ke backend projek dan Workers AI. Elakkan wajah, dokumen atau maklumat peribadi.','Tapping Analyse sends your photo to the project backend and Workers AI. Avoid faces, documents or personal information.')}</Notice><Action title={t('Analisis dengan AI','Analyse with AI')} icon="creation" disabled={busy} onPress={()=>void analyze()}/></>:null}

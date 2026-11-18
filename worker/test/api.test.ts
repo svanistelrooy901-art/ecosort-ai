@@ -44,14 +44,23 @@ describe('Workers AI boundary', () => {
       messages: [{role: 'user', content: [
         {type: 'image_url', image_url: {url: `data:image/jpeg;base64,${jpeg}`}},
         {type: 'text', text: modelPrompt('en')},
-      ]}], max_tokens: 600, temperature: 0, stream: false,
+      ]}], max_tokens: 384, temperature: 0, stream: false,
     });
     expect(env.AI?.run).toHaveBeenCalledTimes(1);
     expect(response.headers.get('Cache-Control')).toBe('no-store');
   });
   it.each([{response: '```json\n{}\n```'}, {response: '{"category":'}, {response: JSON.stringify({...valid, category: 'illegal'})}, {response: ''}, {response: 'x'.repeat(8001)}, {response: valid}, {error: 'private'}])('rejects malformed and truncated provider output %#', async raw => expect((await createHandler()(request(), environment(raw))).status).toBe(502));
   it('does not expose provider failure details', async () => {const env = environment(); env.AI!.run = vi.fn().mockRejectedValue(new Error('secret token')); const response = await createHandler()(request(), env); expect(response.status).toBe(502); expect(await response.text()).not.toContain('secret');});
-  it('times out a stalled binding without waiting forever', async () => {vi.useFakeTimers(); const env = environment(); env.AI!.run = vi.fn().mockImplementation(() => new Promise(() => {})); const pending = createHandler()(request(), env); await vi.waitFor(() => expect(env.AI!.run).toHaveBeenCalled()); await vi.advanceTimersByTimeAsync(25_100); expect(await (await pending).json()).toEqual({error: 'analysis_timeout'});});
+  it('accepts a model result that arrives after the old 25-second timeout', async () => {
+    vi.useFakeTimers(); const env = environment();
+    env.AI!.run = vi.fn().mockImplementation(() => new Promise(resolve => setTimeout(() => resolve({response: JSON.stringify(valid)}), 40_000)));
+    const pending = createHandler()(request(), env);
+    await vi.waitFor(() => expect(env.AI!.run).toHaveBeenCalled());
+    await vi.advanceTimersByTimeAsync(40_100);
+    expect(await (await pending).json()).toEqual({version: 2, language: 'ms', identification: valid});
+    expect(env.AI?.run).toHaveBeenCalledTimes(1);
+  });
+  it('times out a stalled binding at 75 seconds without waiting forever or retrying', async () => {vi.useFakeTimers(); const env = environment(); env.AI!.run = vi.fn().mockImplementation(() => new Promise(() => {})); const pending = createHandler()(request(), env); await vi.waitFor(() => expect(env.AI!.run).toHaveBeenCalled()); await vi.advanceTimersByTimeAsync(75_100); const response = await pending; expect(await response.json()).toEqual({error: 'analysis_timeout'}); expect(response.headers.get('X-Ecoxene-Diagnostic')).toBe('provider:timeout'); expect(env.AI?.run).toHaveBeenCalledTimes(1);});
   it('prompts against treating image text as instructions or inferring illegality', () => {expect(modelPrompt('ms')).toContain('untrusted'); expect(modelPrompt('ms')).toContain('Bahasa Melayu'); expect(modelPrompt('en')).toContain('not proof');});
   it('validates model response with the shared parser', () => expect(parseModelResponse({response: JSON.stringify(valid)})).toEqual(valid));
   it.each(['```json\n', '```\n', '```JSON\r\n'])('accepts a single complete JSON code fence %s', prefix => {
