@@ -7,7 +7,9 @@
     "icon": "./assets/branding/ecosort-icon.png",
     "userInterfaceStyle": "light",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "space.digitalsambal.ecosort",
+      "buildNumber": "1"
     },
     "android": {
       "adaptiveIcon": {
