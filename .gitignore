@@ -10,8 +10,13 @@ ios/
 .dev.vars*
 *.jks
 *.keystore
+credentials.json
+*.p12
+*.p8
+*.mobileprovision
 worker/.wrangler/
 dist-web/
 *.log
 !worker/.dev.vars.example
 dist-android/
+dist-ios/
